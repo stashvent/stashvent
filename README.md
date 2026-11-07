@@ -101,6 +101,8 @@ the latest docs on GitHub, which may describe a newer version than yours:
 
 - [DOCS.md](https://github.com/stashvent/stashvent/blob/main/DOCS.md): every
   command, choosing a server, the secret scan, scripts and CI, troubleshooting
+- [SELF_HOSTING.md](https://github.com/stashvent/stashvent/blob/main/SELF_HOSTING.md):
+  running your own server, from the published image
 - [SETUP.md](https://github.com/stashvent/stashvent/blob/main/SETUP.md):
   building, running, and testing StashVent yourself
 - [RELEASES.md](https://github.com/stashvent/stashvent/blob/main/RELEASES.md):

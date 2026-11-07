@@ -36,7 +36,7 @@ image) on Linux.
   rewrite them as [SETUP.md](SETUP.md#cli-output) shows and check the diff.
 - **Database:** schema and query changes follow
   [SETUP.md](SETUP.md#database), including committing the generated code.
-- **Docs:** update [DOCS.md](DOCS.md), [SETUP.md](SETUP.md), or
+- **Docs:** update [DOCS.md](DOCS.md), [SETUP.md](SETUP.md), [SELF_HOSTING.md](SELF_HOSTING.md), or
   [RELEASES.md](RELEASES.md) when commands, flags, limits, make targets, or the
   release pipeline change.
 - **Rules per area** live in `.claude/skills/`: crypto, Git, Postgres, the

@@ -257,7 +257,8 @@ that step fails, the build fails.
 
 If the tests fail, nothing is published. To deploy, point the hosted server
 at the version's image, e.g. `…:server-v0.1.0-rc.1`; it logs that version at
-startup. Rolling back is pointing it at the previous version.
+startup. Rolling back is pointing it at the previous version. Running the
+image yourself is covered in [SELF_HOSTING.md](SELF_HOSTING.md).
 
 A server version and a CLI version with the same number aren't tied
 together: the `/v1` API is what they share, and it only changes in ways
