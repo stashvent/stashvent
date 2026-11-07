@@ -1,0 +1,40 @@
+name: Feature request
+description: Suggest a change or something new.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the idea. Starting from the problem you have, not only the solution, makes it easier to find the right change.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you're trying to do, and what gets in the way today.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you'd like
+      description: How it could work. A command or output sketch helps.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Workarounds you use now, or other ways it could be solved.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you send it
+      options:
+        - label: I searched the existing issues for this.
+          required: true
+        - label: It keeps the server from seeing the code, the password, or repository details (name, branch, files). Ideas that need the server to see them are out of scope.
+          required: true

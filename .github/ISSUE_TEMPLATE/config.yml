@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem
+    url: https://github.com/stashvent/stashvent/security/advisories/new
+    about: Report vulnerabilities privately, never in a public issue.
+  - name: Using stashvent
+    url: https://github.com/stashvent/stashvent/blob/main/DOCS.md#troubleshooting
+    about: Commands, limits, and what common error messages mean.

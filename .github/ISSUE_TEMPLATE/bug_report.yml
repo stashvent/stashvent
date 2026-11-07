@@ -1,0 +1,83 @@
+name: Bug report
+description: Something in stashvent or the server doesn't work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Never paste a share's password, a link together with its password, or an API key** (`sv_…`). Replace them with `<password>`, `<link>`, or `<key>`.
+
+        A security problem? Don't open an issue: report it privately as [SECURITY.md](https://github.com/stashvent/stashvent/blob/main/SECURITY.md) describes.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, and what went wrong.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and output
+      description: The command you ran and everything it printed. Remove any password, link with its password, or key first.
+      render: text
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: stashvent version
+      description: The output of `stashvent version`.
+      placeholder: stashvent v0.1.0 (commit 1a2b3c4)
+    validations:
+      required: true
+
+  - type: input
+    id: git-version
+    attributes:
+      label: Git version
+      description: The output of `git --version`.
+      placeholder: git version 2.47.1
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - macOS
+        - Linux
+        - Windows
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: server
+    attributes:
+      label: Server
+      description: Which server the command talked to.
+      options:
+        - The hosted service (stashvent.dev)
+        - A self-hosted server
+        - A server on my own machine (localhost)
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: more
+    attributes:
+      label: Anything else
+      description: Steps to reproduce it, how often it happens, or what you already tried.
