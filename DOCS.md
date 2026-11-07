@@ -101,7 +101,8 @@ Every command that talks to a server picks it in this order:
 2. the `STASHVENT_SERVER` environment variable
 3. the default, `https://stashvent.dev`, the hosted service
 
-For a server on your own machine, use `http://localhost:8080`.
+For a server on your own machine, use `http://localhost:8080`. To run a
+server for your team, see [SELF_HOSTING.md](SELF_HOSTING.md).
 
 ```
 # for one command

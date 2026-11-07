@@ -10,9 +10,11 @@ imported into the recipient's `git stash list`. The server never sees plaintext 
 password.
 
 - `DOCS.md` (using the CLI), `SETUP.md` (developing), `CONTRIBUTING.md` (the checks
-  and rules for a pull request), and `RELEASES.md` (downloads and cutting a release)
-  are the human-facing docs; update them when commands, flags, limits, make targets,
-  or the release pipeline change.
+  and rules for a pull request), `RELEASES.md` (downloads and cutting a release), and
+  `SELF_HOSTING.md` (running the server image) are the human-facing docs; update them
+  when commands, flags, limits, settings, make targets, or the release pipeline
+  change. A new or changed server environment variable belongs in `SELF_HOSTING.md`'s
+  settings table and `.env.example` together.
 
 ## Commands
 
