@@ -1,0 +1,12 @@
+# An allowlist: only what the server image is built from. Anything else in the
+# folder, tracked or not, stays out of the build context.
+*
+!go.mod
+!go.sum
+!apikey
+!apps/stashvent-server
+!internal
+!tools/go.mod
+!tools/go.sum
+!LICENSE
+!NOTICE

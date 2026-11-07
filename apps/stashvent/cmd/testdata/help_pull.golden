@@ -1,0 +1,25 @@
+Download a shared stash, decrypt it on this machine, and add it to your stash
+list. Nothing in your working tree changes: apply it with "git stash apply"
+when you want it.
+
+Run it inside a clone of the repository the stash came from. The password is
+asked for at a hidden prompt; three tries.
+
+Usage:
+  stashvent pull <link> [flags]
+
+Examples:
+  stashvent pull https://stashvent.example/8xK29qLm4Tz7
+
+  # A bare share ID is looked up on your own server (--server)
+  stashvent pull 8xK29qLm4Tz7
+
+  # In a script: the password comes from stdin
+  echo "$PASSWORD" | stashvent pull --password-stdin https://stashvent.example/8xK29qLm4Tz7
+
+Flags:
+  -h, --help             help for pull
+      --password-stdin   read the password from stdin
+
+Global Flags:
+      --server string   StashVent server URL (env STASHVENT_SERVER)

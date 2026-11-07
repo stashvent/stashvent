@@ -1,0 +1,18 @@
+Remove the API key saved for the server chosen with --server,
+STASHVENT_SERVER, or the default. Keys for other servers stay.
+
+This only forgets the key on this machine. If it may have leaked, ask the
+server's operator to revoke it.
+
+Usage:
+  stashvent logout [flags]
+
+Examples:
+  stashvent logout
+  stashvent logout --server https://stashvent.example
+
+Flags:
+  -h, --help   help for logout
+
+Global Flags:
+      --server string   StashVent server URL (env STASHVENT_SERVER)

@@ -1,0 +1,14 @@
+{
+  "identities": [
+    {
+      "name": "stashvent-dev",
+      "credentials": [
+        {
+          "accessKey": "stashvent-dev",
+          "secretKey": "stashvent-dev-secret"
+        }
+      ],
+      "actions": ["Admin", "Read", "List", "Tagging", "Write"]
+    }
+  ]
+}

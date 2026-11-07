@@ -1,0 +1,7 @@
+# Store text files with LF line endings in the repo and check them out with LF,
+# on every OS. gofmt, shell scripts, and container files all expect LF.
+* text=auto eol=lf
+
+# Windows-only scripts keep CRLF.
+*.bat eol=crlf
+*.cmd eol=crlf

@@ -1,0 +1,31 @@
+# sqlc generates internal/storage/postgres/db from the queries, using the goose
+# migrations as the schema. Run `make sqlc` after changing either.
+version: "2"
+sql:
+  - engine: postgresql
+    schema: internal/storage/postgres/migrations
+    queries: internal/storage/postgres/queries
+    gen:
+      go:
+        package: db
+        out: internal/storage/postgres/db
+        sql_package: pgx/v5
+        overrides:
+          - db_type: timestamptz
+            go_type: time.Time
+          - db_type: timestamptz
+            nullable: true
+            go_type:
+              import: time
+              type: Time
+              pointer: true
+          - db_type: date
+            go_type: time.Time
+          - column: shares.api_key_id
+            go_type:
+              type: int64
+              pointer: true
+          - column: shares.bundle_version
+            go_type: int
+          - db_type: pg_catalog.interval
+            go_type: time.Duration

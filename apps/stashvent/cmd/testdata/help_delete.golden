@@ -1,0 +1,28 @@
+Delete a share from the server before it expires. Its link stops working at
+once.
+
+A share pushed from this machine is deleted with the delete token kept in
+its history (see "stashvent list"). The request goes to the server the share
+was pushed to, whatever --server says.
+
+A share pushed from another machine can be deleted with the API key that
+pushed it, if you have run "stashvent login" here (or set STASHVENT_API_KEY).
+Then the request goes to the server chosen with --server, STASHVENT_SERVER,
+or the default; a link to any other server is refused, so your key never
+goes to a host named in a link.
+
+Your own stash, and copies that were already pulled, are ordinary Git stashes
+and are not touched.
+
+Usage:
+  stashvent delete <id> [flags]
+
+Examples:
+  stashvent delete 8xK29qLm4Tz7
+  stashvent delete https://stashvent.example/8xK29qLm4Tz7
+
+Flags:
+  -h, --help   help for delete
+
+Global Flags:
+      --server string   StashVent server URL (env STASHVENT_SERVER)

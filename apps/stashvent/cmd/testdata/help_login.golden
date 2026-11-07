@@ -1,0 +1,27 @@
+Save the API key you were given for a server, so "push" and "delete" can use
+it. A server that requires keys refuses pushes without one; its operator
+hands them out. A server that doesn't require them needs no login.
+
+The key is read from a hidden prompt, or from stdin with --with-token, never
+from the command line. It is saved in config.json for the server chosen with
+--server, STASHVENT_SERVER, or the default, and sent only to that server,
+only on push and delete. Pulling never sends it.
+
+In CI, STASHVENT_API_KEY can hold the key instead; it wins over a saved one.
+
+Usage:
+  stashvent login [flags]
+
+Examples:
+  stashvent login
+  stashvent login --server https://stashvent.example
+
+  # From a file or a secret store, without a terminal
+  stashvent login --with-token < key.txt
+
+Flags:
+  -h, --help         help for login
+      --with-token   read the key from stdin
+
+Global Flags:
+      --server string   StashVent server URL (env STASHVENT_SERVER)

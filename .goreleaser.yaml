@@ -1,0 +1,73 @@
+# GoReleaser builds the stashvent CLI and publishes it as a GitHub Release
+# when a version tag is pushed (.github/workflows/release.yml). Dry run,
+# into dist/ and without publishing: make release-snapshot.
+# Only the CLI: the server image is published by .github/workflows/image.yml.
+version: 2
+
+project_name: stashvent
+
+# The licenses (and NOTICE files) of every dependency compiled into the CLI,
+# which the archives must carry. go-licenses is built for this machine first:
+# with GOOS set, `go tool` would cross-compile the tool itself. GOOS=windows
+# because Windows needs one module more (cobra's mousetrap) and otherwise the
+# same ones as Linux and macOS, so this one set covers every archive.
+before:
+  hooks:
+    - go build -modfile=tools/go.mod -o bin/go-licenses github.com/google/go-licenses/v2
+    - env GOOS=windows ./bin/go-licenses save ./apps/stashvent --ignore github.com/stashvent/stashvent --save_path third_party_licenses --force
+
+builds:
+  - id: stashvent
+    main: ./apps/stashvent
+    binary: stashvent
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    # v{{ .Version }} is the tag on a release (v0.1.0-rc.1) and the snapshot
+    # version on a dry run; .Tag would name the previous tag there.
+    ldflags:
+      - -s -w -X main.version=v{{ .Version }} -X main.commit={{ .ShortCommit }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+# install.sh and install.ps1 depend on the archives' default names
+# (stashvent_<version>_<os>_<arch>), their formats, the folder inside them,
+# and checksums.txt. The scripts on main also install older releases, so a
+# change here must keep those working too.
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    # In a folder named like the archive, so unpacking never overwrites a
+    # README.md, LICENSE, or NOTICE in the current directory.
+    wrap_in_directory: true
+    # Listed so the build fails if one is missing (and CHANGELOG* stays out).
+    # Apache-2.0 4(d): redistributions keep NOTICE.
+    files:
+      - LICENSE
+      - NOTICE
+      - README.md
+      - third_party_licenses/**/*
+
+# GoReleaser's default snapshot version ends in the short commit, which
+# stashvent version already prints after it.
+snapshot:
+  version_template: "{{ .Version }}-SNAPSHOT"
+
+checksum:
+  # The install scripts download this name.
+  name_template: checksums.txt
+
+changelog:
+  use: git
+  sort: asc
+
+release:
+  # A tag with a pre-release suffix (v0.1.0-rc.1) becomes a pre-release.
+  prerelease: auto
+  # Only the highest final version is marked latest, which is what the install
+  # scripts install; release.yml decides (true when the variable isn't set).
+  make_latest: '{{ envOrDefault "STASHVENT_MAKE_LATEST" "true" }}'

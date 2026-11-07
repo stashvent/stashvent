@@ -1,0 +1,25 @@
+version: "2"
+
+# Lint the Docker-stack and end-to-end tests too; they are behind build tags.
+run:
+  build-tags:
+    - integration
+    - e2e
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - bodyclose # HTTP response bodies must be closed
+    - errorlint # wrapped errors compared with errors.Is/As, not ==
+    - gosec # security issues (weak crypto, file permissions, ...)
+    - misspell
+    - noctx # HTTP requests must carry a context
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/stashvent/stashvent

@@ -1,0 +1,175 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/go.sum"
+      - run: go build ./...
+      - run: go vet ./...
+      - name: Test (with race detector)
+        if: runner.os == 'Linux'
+        run: go test -race ./...
+      - name: Test
+        if: runner.os != 'Linux'
+        run: go test ./...
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/go.sum"
+      - uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.14.0
+
+  db:
+    name: Database (migrations, sqlc, store tests)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine3.24
+        env:
+          POSTGRES_USER: stashvent
+          POSTGRES_PASSWORD: stashvent
+          POSTGRES_DB: stashvent
+        ports:
+          - 5438:5432
+        options: >-
+          --health-cmd "pg_isready -U stashvent -d stashvent"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://stashvent:stashvent@localhost:5438/stashvent?sslmode=disable
+      GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: postgres://stashvent:stashvent@localhost:5438/stashvent?sslmode=disable
+      GOOSE_MIGRATION_DIR: internal/storage/postgres/migrations
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/go.sum"
+      # Up → down to 0 → up proves every Down works.
+      - name: Migrations up, down, up
+        run: |
+          go tool -modfile=tools/go.mod goose up
+          go tool -modfile=tools/go.mod goose down-to 0
+          go tool -modfile=tools/go.mod goose up
+      # Keep in step with SQLC_IMAGE in the Makefile.
+      - uses: sqlc-dev/setup-sqlc@v4
+        with:
+          sqlc-version: "1.31.1"
+      - name: Generated query code is up to date
+        run: sqlc diff
+      - name: Store tests
+        run: go test -tags integration ./internal/storage/postgres/...
+
+  # The server and storage integration tests need object storage as well as
+  # Postgres, so they run against the same Docker Compose stack as local
+  # development (make up). The store's own tests run in the db job.
+  integration:
+    name: Integration (server, storage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/go.sum"
+      - name: Start Postgres and SeaweedFS
+        run: docker compose up -d --wait postgres seaweedfs
+      # Runs in the foreground, so the step fails if the bucket can't be made.
+      - name: Create the bucket
+        run: docker compose run --rm createbucket
+      - name: Server and storage tests
+        run: go test -tags integration ./apps/stashvent-server ./internal/storage
+      - name: Container logs
+        if: failure()
+        run: docker compose logs --no-color
+
+  # The built binaries (make test-e2e) against the server image, as shipped:
+  # this also builds deploy/docker/server.Dockerfile. Locally the same tests
+  # run against make run-server-e2e.
+  e2e:
+    name: End to end (binaries, server image)
+    runs-on: ubuntu-latest
+    env:
+      # Read by docker compose for the server container. Keep in step with
+      # E2E_SERVER_ENV in the Makefile, which make test-e2e passes to the tests.
+      REQUIRE_API_KEY: "true"
+      API_KEY_SHARES_PER_DAY: "3"
+      MAX_PULLS_PER_SHARE: "2"
+      MAX_STORED_BYTES: "0"
+      RATE_LIMIT_CREATE_PER_MINUTE: "600"
+      RATE_LIMIT_CREATE_BURST: "100"
+      RATE_LIMIT_LOOKUP_PER_MINUTE: "600"
+      RATE_LIMIT_LOOKUP_BURST: "100"
+      RATE_LIMIT_OTHER_PER_MINUTE: "600"
+      RATE_LIMIT_OTHER_BURST: "100"
+      RATE_LIMIT_KEY_CREATE_PER_MINUTE: "600"
+      RATE_LIMIT_KEY_CREATE_BURST: "100"
+      # The tests and the operator commands run on the runner. keys ban needs
+      # the S3 settings as well as the database (.env.example's values).
+      DATABASE_URL: postgres://stashvent:stashvent@localhost:5438/stashvent?sslmode=disable
+      S3_ENDPOINT: http://localhost:8333
+      S3_PUBLIC_ENDPOINT: http://localhost:8333
+      S3_REGION: us-east-1
+      S3_BUCKET: stashvent
+      S3_USE_PATH_STYLE: "true"
+      S3_ACCESS_KEY: stashvent-dev
+      S3_SECRET_KEY: stashvent-dev-secret
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/go.sum"
+      - name: Start Postgres and SeaweedFS
+        run: docker compose up -d --wait postgres seaweedfs
+      - name: Create the bucket
+        run: docker compose run --rm createbucket
+      - name: Build and start the server image
+        run: docker compose --profile server up -d --build server
+      - name: Wait for the server
+        run: curl --fail --silent --show-error --retry 30 --retry-delay 1 --retry-all-errors http://localhost:8080/readyz
+      - name: End-to-end tests
+        run: make test-e2e
+      - name: Container logs
+        if: failure()
+        run: docker compose --profile server logs --no-color
+
+  vuln:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/go.sum"
+      - run: go tool -modfile=tools/go.mod govulncheck ./...

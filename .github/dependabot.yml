@@ -1,0 +1,47 @@
+# Version updates, grouped and monthly so they arrive as a few PRs. Security
+# updates don't wait for this schedule: with "Dependabot security updates" on
+# in the repository settings, they come as soon as an advisory is published.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      go:
+        patterns: ["*"]
+
+  # Dev tools (goose, govulncheck, go-licenses), a module of their own.
+  - package-ecosystem: gomod
+    directory: /tools
+    schedule:
+      interval: monthly
+    groups:
+      tools:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # The server image's base images.
+  - package-ecosystem: docker
+    directory: /deploy/docker
+    schedule:
+      interval: monthly
+    groups:
+      docker:
+        patterns: ["*"]
+
+  # Postgres, SeaweedFS, and the AWS CLI for local development and CI.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      compose:
+        patterns: ["*"]

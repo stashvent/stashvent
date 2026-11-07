@@ -1,0 +1,35 @@
+StashVent shares unfinished Git work. A stash is packaged, encrypted on this
+machine with a password, and uploaded. Whoever has the link and the password
+can import it into their own stash list. The server never sees the password
+or the contents.
+
+Usage:
+  stashvent <command> [flags]
+
+Examples:
+  # Share the newest stash; prints a link and a password
+  stashvent push
+
+  # Import a shared stash (asks for the password)
+  stashvent pull https://stashvent.example/8xK29qLm4Tz7
+
+  # See what this machine has shared, and take a share back
+  stashvent list
+  stashvent delete 8xK29qLm4Tz7
+
+Commands:
+  delete      Delete a share from the server before it expires
+  help        Help about any command
+  list        List the shares sent from this machine
+  login       Save the API key you were given for a server
+  logout      Remove the saved API key for a server
+  pull        Download, decrypt, and import a shared stash
+  push        Encrypt and share a stash
+  version     Print the stashvent version and commit
+
+Flags:
+  -h, --help            help for stashvent
+      --server string   StashVent server URL (env STASHVENT_SERVER)
+  -v, --version         version for stashvent
+
+Use "stashvent <command> --help" for more information about a command.

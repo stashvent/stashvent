@@ -1,0 +1,87 @@
+name: Release
+
+# Builds the stashvent CLI with GoReleaser (.goreleaser.yaml) and publishes a
+# GitHub Release with the archives, checksums.txt, and a changelog when a
+# version tag is pushed: v0.1.0, or v0.1.0-rc.1 for a pre-release. Dry run
+# locally with make release-snapshot. The server image has its own tags
+# (server-v0.1.0) and workflow, image.yml; the tag filter below doesn't match them.
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # A tag push doesn't run CI, and the release ships binaries for all three
+  # systems, so their tests run here before anything is published. Keep in
+  # step with the test job in ci.yml.
+  test:
+    name: Test (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/go.sum"
+      - run: go vet ./...
+      - name: Test (with race detector)
+        if: runner.os == 'Linux'
+        run: go test -race ./...
+      - name: Test
+        if: runner.os != 'Linux'
+        run: go test ./...
+
+  release:
+    name: Build and publish the CLI
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # The changelog and the previous tag need the whole history.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: "**/go.sum"
+      # The server has its own tags (server-v0.1.0, image.yml). Name the CLI's
+      # tags for GoReleaser, so it never takes a server tag as this release's
+      # version or as the previous release the changelog starts from.
+      #
+      # GitHub's "latest" release is what the install scripts install. Only the
+      # highest final version gets it: a fix on an older line (v0.1.1 after
+      # v0.2.0) would otherwise become latest and downgrade everyone who runs
+      # the scripts. Pre-releases never get it.
+      - name: CLI tags
+        run: |
+          echo "GORELEASER_CURRENT_TAG=$GITHUB_REF_NAME" >> "$GITHUB_ENV"
+          prev=$(git describe --tags --abbrev=0 --match 'v[0-9]*' "$GITHUB_REF_NAME^" 2>/dev/null || true)
+          if [ -n "$prev" ]; then
+            echo "GORELEASER_PREVIOUS_TAG=$prev" >> "$GITHUB_ENV"
+          fi
+          highest=$(git tag -l 'v[0-9]*' --sort=-version:refname | awk '!/-/ && !found { print; found = 1 }')
+          latest=false
+          if [ "$GITHUB_REF_NAME" = "$highest" ]; then latest=true; fi
+          echo "STASHVENT_MAKE_LATEST=$latest" >> "$GITHUB_ENV"
+          echo "This release: $GITHUB_REF_NAME, previous: ${prev:-none}, marked latest: $latest"
+      - uses: goreleaser/goreleaser-action@v7
+        with:
+          distribution: goreleaser
+          # Keep in step with GORELEASER_IMAGE in the Makefile.
+          version: v2.18.3
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

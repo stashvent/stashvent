@@ -1,0 +1,6 @@
+Server: https://stashvent.example (from STASHVENT_SERVER)
+✓ Secret scan passed
+✓ Packaged stash@{0}: On main: payment retry WIP (2 files)
+✓ Encrypted locally
+✓ Uploaded
+Send the password through a different channel than the link.

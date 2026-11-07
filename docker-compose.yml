@@ -1,0 +1,113 @@
+# Local development infrastructure.
+#
+#   make up                                   # postgres + seaweedfs (server runs on the host)
+#   docker compose --profile server up -d     # also run the containerized server
+#
+# Values come from .env when present; otherwise the defaults below apply.
+
+name: stashvent
+
+services:
+  postgres:
+    image: postgres:18.6-alpine3.24
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-stashvent}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stashvent}
+      POSTGRES_DB: ${POSTGRES_DB:-stashvent}
+    ports:
+      - "${POSTGRES_PORT:-5438}:5432"
+    volumes:
+      # Postgres 18 images keep data in a version-specific subdirectory of
+      # /var/lib/postgresql. Don't mount /var/lib/postgresql/data (pre-18 layout).
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  seaweedfs:
+    image: chrislusf/seaweedfs:4.47
+    command: >-
+      server -dir=/data -s3 -s3.port=8333
+      -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - "${S3_PORT:-8333}:8333"
+    volumes:
+      - seaweeddata:/data
+      - ./deploy/docker/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1:8333/healthz || exit 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # One-shot: creates the bucket if it doesn't exist. Uses the generic AWS CLI,
+  # so it works against any S3-compatible backend.
+  createbucket:
+    image: amazon/aws-cli:2.37.4
+    depends_on:
+      seaweedfs:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-stashvent-dev}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-stashvent-dev-secret}
+      AWS_DEFAULT_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-stashvent}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        aws --endpoint-url http://seaweedfs:8333 s3api head-bucket --bucket "$$S3_BUCKET" 2>/dev/null
+        || aws --endpoint-url http://seaweedfs:8333 s3api create-bucket --bucket "$$S3_BUCKET"
+    restart: "no"
+
+  server:
+    profiles: ["server"]
+    build:
+      context: .
+      dockerfile: deploy/docker/server.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      createbucket:
+        condition: service_completed_successfully
+    environment:
+      SERVER_ADDR: ":8080"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DATABASE_URL: postgres://${POSTGRES_USER:-stashvent}:${POSTGRES_PASSWORD:-stashvent}@postgres:5432/${POSTGRES_DB:-stashvent}?sslmode=disable
+      # Server → storage over the Docker network...
+      S3_ENDPOINT: http://seaweedfs:8333
+      # ...but presigned URLs must point where the CLI (on the host) can reach.
+      S3_PUBLIC_ENDPOINT: http://localhost:${S3_PORT:-8333}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${S3_BUCKET:-stashvent}
+      S3_USE_PATH_STYLE: "true"
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-stashvent-dev}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-stashvent-dev-secret}
+      MAX_PAYLOAD_BYTES: ${MAX_PAYLOAD_BYTES:-5242880}
+      # Per client address; see .env.example. Requests from the host reach this
+      # container through Docker's gateway, so they all count as one client.
+      RATE_LIMIT_CREATE_PER_MINUTE: ${RATE_LIMIT_CREATE_PER_MINUTE:-10}
+      RATE_LIMIT_CREATE_BURST: ${RATE_LIMIT_CREATE_BURST:-5}
+      RATE_LIMIT_LOOKUP_PER_MINUTE: ${RATE_LIMIT_LOOKUP_PER_MINUTE:-30}
+      RATE_LIMIT_LOOKUP_BURST: ${RATE_LIMIT_LOOKUP_BURST:-10}
+      RATE_LIMIT_OTHER_PER_MINUTE: ${RATE_LIMIT_OTHER_PER_MINUTE:-60}
+      RATE_LIMIT_OTHER_BURST: ${RATE_LIMIT_OTHER_BURST:-20}
+      RATE_LIMIT_KEY_CREATE_PER_MINUTE: ${RATE_LIMIT_KEY_CREATE_PER_MINUTE:-10}
+      RATE_LIMIT_KEY_CREATE_BURST: ${RATE_LIMIT_KEY_CREATE_BURST:-5}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      # API keys and abuse controls; see .env.example.
+      REQUIRE_API_KEY: ${REQUIRE_API_KEY:-false}
+      API_KEY_SHARES_PER_DAY: ${API_KEY_SHARES_PER_DAY:-10}
+      MAX_STORED_BYTES: ${MAX_STORED_BYTES:-0}
+      MAX_PULLS_PER_SHARE: ${MAX_PULLS_PER_SHARE:-50}
+    ports:
+      - "${SERVER_PORT:-8080}:8080"
+
+volumes:
+  pgdata:
+  seaweeddata:

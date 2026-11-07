@@ -1,0 +1,16 @@
+List the shares sent from this machine that haven't expired, newest first.
+
+The list comes from a history file on this machine. It doesn't include shares
+pushed from another machine, and it isn't checked against the server.
+
+Usage:
+  stashvent list [flags]
+
+Examples:
+  stashvent list
+
+Flags:
+  -h, --help   help for list
+
+Global Flags:
+      --server string   StashVent server URL (env STASHVENT_SERVER)
