@@ -45,6 +45,46 @@
         }
     }
 
+    # Get-StatusCode returns the HTTP status of a failed Invoke-WebRequest, or
+    # 0 when there was no answer.
+    function Get-StatusCode($err) {
+        if ($err.Exception.Response) { return [int]$err.Exception.Response.StatusCode }
+        return 0
+    }
+
+    # Invoke-Download runs Invoke-WebRequest with $params. GitHub's release
+    # downloads sometimes answer 504 for a few seconds, so a request is tried
+    # again (after 1, 2 and 4 seconds) when there is no answer or a 408, 429,
+    # 500, 502, 503 or 504, like install.sh's curl --retry. The last error is
+    # thrown. (-MaximumRetryCount needs PowerShell 7.1.)
+    function Invoke-Download([hashtable]$params) {
+        $delay = 1
+        for ($try = 1; ; $try++) {
+            try {
+                return Invoke-WebRequest @params -UseBasicParsing
+            } catch {
+                $code = Get-StatusCode $_
+                if ($try -gt 3 -or $code -notin 0, 408, 429, 500, 502, 503, 504) { throw }
+                Start-Sleep -Seconds $delay
+                $delay *= 2
+            }
+        }
+    }
+
+    # Save-ReleaseFile downloads $uri, a file of release $version, to
+    # $outFile, or throws. Only a 404 means the release (or this file of it)
+    # isn't there; any other status is GitHub's problem.
+    function Save-ReleaseFile([string]$uri, [string]$outFile, [string]$version) {
+        try {
+            Invoke-Download @{ Uri = $uri; OutFile = $outFile } | Out-Null
+        } catch {
+            $code = Get-StatusCode $_
+            if ($code -eq 404) { throw "could not download $uri; is $version on $repoUrl/releases?" }
+            if ($code) { throw "GitHub answered $code for $uri; try again later" }
+            throw "could not download ${uri}: $($_.Exception.Message)"
+        }
+    }
+
     # Get-LatestVersion follows the redirect of /releases/latest to the release
     # GitHub marks as latest (.../releases/tag/v0.1.0): the highest final
     # version, because the release workflow doesn't mark fixes on older lines
@@ -56,10 +96,9 @@
         $latest = "$repoUrl/releases/latest"
         $noRelease = "there is no release at $repoUrl/releases yet; to install a pre-release, set `$env:STASHVENT_VERSION"
         try {
-            $response = Invoke-WebRequest -Uri $latest -Method Head -UseBasicParsing
+            $response = Invoke-Download @{ Uri = $latest; Method = 'Head' }
         } catch {
-            $code = 0
-            if ($_.Exception.Response) { $code = [int]$_.Exception.Response.StatusCode }
+            $code = Get-StatusCode $_
             if ($code -eq 404) { throw $noRelease }
             if ($code) { throw "GitHub answered $code for $latest; try again later" }
             throw "could not reach ${latest}: $($_.Exception.Message)"
@@ -166,16 +205,8 @@
         New-Item -ItemType Directory -Path $tmp | Out-Null
         try {
             Write-Host "Downloading stashvent $version$pinned for windows/$arch..."
-            try {
-                Invoke-WebRequest -Uri "$base/$asset" -OutFile "$tmp\$asset" -UseBasicParsing
-            } catch {
-                throw "could not download $base/$asset; is $version on $repoUrl/releases? ($($_.Exception.Message))"
-            }
-            try {
-                Invoke-WebRequest -Uri "$base/checksums.txt" -OutFile "$tmp\checksums.txt" -UseBasicParsing
-            } catch {
-                throw "could not download $base/checksums.txt ($($_.Exception.Message))"
-            }
+            Save-ReleaseFile "$base/$asset" "$tmp\$asset" $version
+            Save-ReleaseFile "$base/checksums.txt" "$tmp\checksums.txt" $version
 
             $want = foreach ($line in Get-Content -LiteralPath "$tmp\checksums.txt") {
                 $fields = -split $line

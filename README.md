@@ -52,9 +52,9 @@ stashvent pull https://stashvent.example/8xK29qLm4Tz7
 git stash apply
 ```
 
-Send the link and the password through different channels. If the server
-needs an API key for pushing, run `stashvent login` with the key its operator
-gave you.
+Send the link and the password through different channels: anyone with both
+can open the stash. If the server needs an API key for pushing, run
+`stashvent login` with the key its operator gave you.
 
 ## What the server can and can't see
 

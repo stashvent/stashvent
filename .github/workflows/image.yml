@@ -8,10 +8,10 @@ name: Image
 #     ghcr.io/<owner>/stashvent-server:<commit sha>   never moves
 #     ghcr.io/<owner>/stashvent-server:latest         final versions only, not -rc
 #
-# - By hand (Actions → Image → Run workflow), on the chosen branch's latest
-#   commit, for builds between releases:
+# - By hand (Actions → Image → Run workflow), on main only, for builds between
+#   releases:
 #     ghcr.io/<owner>/stashvent-server:<commit sha>   every run, never moves
-#     ghcr.io/<owner>/stashvent-server:main           only for runs on main
+#     ghcr.io/<owner>/stashvent-server:main           moves to the latest run
 #
 # Either way the tests run first: a tag push doesn't run CI.
 
@@ -36,9 +36,16 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
+      # A run by hand builds main: on another branch it would publish code that
+      # was never merged, and on a server tag it would rebuild a released image
+      # under the same tag.
+      - name: Main only, when run by hand
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::Run this workflow on main. A server release is a pushed server-v… tag (RELEASES.md)."
+          exit 1
       # A tag becomes an image tag, and its suffix decides :latest, so only
-      # server-v<major>.<minor>.<patch>[-<pre-release>] is published. This also
-      # stops Run workflow on a CLI tag (v0.1.0).
+      # server-v<major>.<minor>.<patch>[-<pre-release>] is published.
       - name: Server tag
         if: github.ref_type == 'tag'
         run: |
