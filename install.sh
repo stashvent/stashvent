@@ -33,6 +33,11 @@ EOF
 
 say() { printf '%s\n' "$*"; }
 
+# GitHub's release downloads sometimes answer 504 for a few seconds, so every
+# request is tried again (after 1, 2 and 4 seconds) on a timeout or a 408,
+# 429, 500, 502, 503 or 504; curl's --retry does exactly that.
+retries=3
+
 fail() {
 	printf 'error: %s\n' "$*" >&2
 	exit 1
@@ -76,7 +81,7 @@ detect_arch() {
 # ever gets releases too, this must look for the newest v... tag instead.
 latest_version() {
 	latest="$repo_url/releases/latest"
-	answer=$(curl -sSLI -o /dev/null -w '%{http_code} %{url_effective}' "$latest") ||
+	answer=$(curl -sSLI --retry "$retries" -o /dev/null -w '%{http_code} %{url_effective}' "$latest") ||
 		fail "could not reach $latest"
 	code=${answer%% *}
 	url=${answer#* }
@@ -97,6 +102,21 @@ installed_version() {
 	if [ -x "$target" ]; then
 		"$target" version </dev/null 2>/dev/null | awk '{ print $2 }'
 	fi
+}
+
+# fetch downloads $1, a file of release $version, to $2, or fails. Only a 404
+# means the release (or this file of it) isn't there; any other status is
+# GitHub's problem, which a later try may not have.
+fetch() {
+	status=0
+	code=$(curl -sSL --retry "$retries" -o "$2" -w '%{http_code}' "$1") || status=$?
+	[ "$status" -eq 0 ] && [ "$code" = 200 ] && return
+	case $code in
+	404) fail "could not download $1; is $version on $repo_url/releases?" ;;
+	# No answer, or the transfer broke off; curl has said why.
+	000 | 200) fail "could not download $1" ;;
+	*) fail "GitHub answered $code for $1; try again later" ;;
+	esac
 }
 
 sha256() {
@@ -241,10 +261,8 @@ main() {
 		trap 'exit 143' TERM
 
 		say "Downloading stashvent $version$pinned for $os/$arch..."
-		curl -fsSL -o "$tmp/$asset" "$base/$asset" ||
-			fail "could not download $base/$asset; is $version on $repo_url/releases?"
-		curl -fsSL -o "$tmp/checksums.txt" "$base/checksums.txt" ||
-			fail "could not download $base/checksums.txt"
+		fetch "$base/$asset" "$tmp/$asset"
+		fetch "$base/checksums.txt" "$tmp/checksums.txt"
 
 		want=$(awk -v name="$asset" '$2 == name { print $1 }' "$tmp/checksums.txt")
 		[ -n "$want" ] || fail "checksums.txt has no line for $asset; nothing was installed"

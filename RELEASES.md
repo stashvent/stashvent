@@ -25,7 +25,9 @@ The script ([`install.sh`](install.sh), [`install.ps1`](install.ps1)):
 1. Finds your system and CPU, and the latest release: the highest version that
    isn't a pre-release.
 2. Downloads that release's archive and `checksums.txt` from GitHub, and stops
-   without installing anything if the archive's SHA-256 doesn't match.
+   without installing anything if the archive's SHA-256 doesn't match. A
+   request that times out or gets a server error from GitHub (such as 504) is
+   tried up to three more times, a few seconds apart.
 3. Puts the binary in `~/.local/bin` (Windows: `%LOCALAPPDATA%\Programs\stashvent`),
    without sudo or admin.
 4. Adds that folder to your `PATH` if it isn't there yet: one line in your
@@ -149,6 +151,9 @@ releases page, and neither the install scripts nor `go install` work.
 
 ## Making a release
 
+Releases are cut by the maintainers: only they can push release tags. This
+section is for them, and for anyone who wants to see how a release is built.
+
 Versions follow [semver](https://semver.org) with a `v` in front: `v0.1.0`,
 `v0.1.1`, `v0.2.0`. A release candidate adds `-rc.N`: `v0.1.0-rc.1`. Each
 version is tested as a release candidate first.
@@ -264,8 +269,10 @@ A server version and a CLI version with the same number aren't tied
 together: the `/v1` API is what they share, and it only changes in ways
 older clients understand (the `stashvent-api` skill, "Compatibility").
 
-Between releases, **Run workflow** on a branch builds `:<commit sha>` (and
-moves `:main` when run on `main`), after the same tests.
+Between releases, **Run workflow** on `main` builds `:<commit sha>` and moves
+`:main`, after the same tests. On any other branch or tag it stops before
+building: unmerged code is never published, and a released server tag is
+never rebuilt.
 
 ## When a release goes wrong
 

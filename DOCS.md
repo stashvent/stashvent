@@ -72,9 +72,11 @@ Password:   Kj9nM2xP7qL5vW3bG8dFt4Rw
 Expires:    2026-10-13 16:50 UTC (in 6 hours)
 ```
 
-Send the link and the password through **different channels**, for example
-the link in the pull request and the password in a direct message. The
-password is shown only this once. Your stash stays in your own stash list.
+Anyone who has both the link and the password can open the stash, so send
+them through **different channels**, for example the link in the pull request
+and the password in a direct message. Sent together in one message, the stash
+is only as private as that chat; the server still can't read it either way.
+The password is shown only this once. Your stash stays in your own stash list.
 
 **Recipient**, in their clone of the same repository:
 
@@ -246,8 +248,7 @@ password by PBKDF2-SHA256) before it's uploaded.
   how often it was looked up, and the encryption parameters (salt and IV,
   which aren't secret). With API keys, it knows which key created which share.
 - Anyone with the link **and** the password can import the stash until it
-  expires, is deleted, or reaches its pull limit. Treat both like a secret,
-  and send them through different channels.
+  expires, is deleted, or reaches its pull limit. Treat both like a secret.
 
 ## Files on your machine
 
