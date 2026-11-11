@@ -13,8 +13,9 @@ Thanks for helping. Bug reports, fixes, tests, and docs are all welcome.
   backend): open an issue first, so we can agree on the approach before you
   write the code.
 - **Not in this repo:** the hosted service at `stashvent.dev`, its website,
-  and its accounts. Questions about a hosted API key go to its operator, not
-  to issues here.
+  and its accounts. Hosted API keys are created and replaced at
+  <https://stashvent.dev/account>, and a misused share is reported to
+  [abuse@stashvent.dev](mailto:abuse@stashvent.dev), not in issues here.
 
 ## Making a change
 

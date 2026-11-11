@@ -1,7 +1,8 @@
 # Running your own server
 
 Most people don't need this: the CLI uses the hosted service,
-`https://stashvent.dev`, by default, with nothing to set up. Run your own
+`https://stashvent.dev`, by default, and pushing to it only needs an API key
+from signing in with GitHub. Run your own
 server when your code may not leave your network, or you want full control
 over where shares are stored.
 
