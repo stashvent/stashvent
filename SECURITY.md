@@ -30,7 +30,9 @@ There is no bug bounty: reports aren't paid.
   creating, completing, and deleting shares, API keys, rate limits and quotas, and
   what it stores or logs.
 - The published server image and the release archives.
-- The hosted service at `https://stashvent.dev`, as far as it runs this code.
+- The hosted service at `https://stashvent.dev`, including its website and
+  GitHub sign-in. Their code isn't in this repository, but report problems with
+  them the same way.
 
 ## By design, not vulnerabilities
 
@@ -42,7 +44,8 @@ These are documented trade-offs (see "What the server can and can't see" in the
 - Anyone with the link, even without the password, can use up a share's pulls. The
   server never sees the password, so it can't tell a real pull from a fake one.
 - The server knows each share's size, creation time, expiry, and how often it was
-  looked up, and with API keys on, which key created it.
+  looked up, and with API keys on, which key created it. On the hosted service,
+  each key belongs to a GitHub account.
 - A server running without `REQUIRE_API_KEY` accepts shares from anyone who can reach
   it; it warns about this at startup.
 

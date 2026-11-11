@@ -6,3 +6,6 @@ contact_links:
   - name: Using stashvent
     url: https://github.com/stashvent/stashvent/blob/main/DOCS.md#troubleshooting
     about: Commands, limits, and what common error messages mean.
+  - name: Hosted account or API key
+    url: https://stashvent.dev/account
+    about: Create or replace your API key for the hosted service at stashvent.dev.

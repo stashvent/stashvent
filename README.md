@@ -35,9 +35,10 @@ stashvent version
 
 ## Quickstart
 
-The CLI uses the hosted service, `https://stashvent.dev`. During its closed beta,
-pushing needs an API key: run `stashvent login` once with the one you were given
-(see [API keys](#api-keys)). Pulling needs nothing.
+The CLI uses the hosted service, `https://stashvent.dev`. Pushing to it needs a
+free API key: sign in with GitHub at <https://stashvent.dev/account>, create a
+key, and run `stashvent login` once with it (see [API keys](#api-keys)).
+Pulling needs nothing.
 
 ```
 # Sender, in the repository
@@ -53,8 +54,8 @@ git stash apply
 ```
 
 Send the link and the password through different channels: anyone with both
-can open the stash. If the server needs an API key for pushing, run
-`stashvent login` with the key its operator gave you.
+can open the stash. Opened in a browser, a link to the hosted service shows the
+share's size, its expiry, and the pull command, never the password.
 
 ## What the server can and can't see
 
@@ -68,6 +69,7 @@ server.
 | the code | how many times each share was looked up |
 | the repository name, branch, base commit, and stash message | the salt and IV (not secret) |
 | | with API keys on: which key created which share, and when |
+| | on the hosted service: the GitHub account each key belongs to |
 
 Anyone with both the link **and** the password can import the stash until it
 expires, is deleted, or reaches its pull limit.
@@ -83,22 +85,35 @@ expires, is deleted, or reaches its pull limit.
 
 ## API keys
 
-On a server that requires them (the hosted service does during its beta),
-pushing needs a key from the operator:
+Pushing to the hosted service needs an API key. Sign in with GitHub at
+<https://stashvent.dev/account> and create one, then save it once:
 
 ```
 stashvent login
 ```
 
+An account has one key at a time: use the same key on each of your machines.
+If you think it was exposed, regenerate it on the same page; the old key stops
+working at once. On a self-hosted server that requires keys, its operator
+gives you one instead (`stashvent login --server https://stash.example.com`).
+
 The key is sent only to the server it was saved for, only when pushing or
-deleting, never when pulling. If you think your key was exposed, ask the
-operator for a new one; they revoke the old one.
+deleting, never when pulling.
+
+## Reporting abuse
+
+Shares are encrypted, so nobody can see what's in them. If a link from the hosted
+service is being misused, write to
+[abuse@stashvent.dev](mailto:abuse@stashvent.dev) with the link. Never send the
+password.
 
 ## More
 
 This README also ships inside the release archives, so these links point to
 the latest docs on GitHub, which may describe a newer version than yours:
 
+- [stashvent.dev](https://stashvent.dev): the hosted service, your account
+  and API key, its terms and privacy policy
 - [DOCS.md](https://github.com/stashvent/stashvent/blob/main/DOCS.md): every
   command, choosing a server, the secret scan, scripts and CI, troubleshooting
 - [SELF_HOSTING.md](https://github.com/stashvent/stashvent/blob/main/SELF_HOSTING.md):

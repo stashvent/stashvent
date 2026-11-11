@@ -44,8 +44,8 @@ stashvent version
 ## Quickstart
 
 **Before you start**: the CLI uses the hosted service, `https://stashvent.dev`.
-During its closed beta, pushing needs an API key. Save the one you were given,
-once:
+Pushing to it needs a free API key: sign in with GitHub at
+<https://stashvent.dev/account>, create a key, and save it once:
 
 ```
 stashvent login
@@ -125,8 +125,14 @@ $env:STASHVENT_SERVER = "https://stash.example.com"      # PowerShell
 
 ## API keys
 
-A server can require an API key for pushing (the hosted service does, during
-its beta). Its operator gives you the key. Pulling never needs one.
+A server can require an API key for pushing. Pulling never needs one.
+
+- **On the hosted service**, sign in with GitHub at
+  <https://stashvent.dev/account> and create a key there. StashVent asks GitHub
+  only for your username and email address, never for access to your
+  repositories. An account has one key at a time, so use the same key on each
+  of your machines.
+- **On another server**, its operator gives you the key.
 
 ```
 stashvent login                          # asks for the key at a hidden prompt
@@ -140,8 +146,14 @@ stashvent logout                         # forgets the key for this server
 - A key is never read from the command line, and never printed.
 - `STASHVENT_API_KEY` can hold the key instead (for CI). It wins over a saved
   key and goes to the server chosen for the command.
-- If you think your key was exposed, ask the operator for a new one; they revoke
-  the old one. `logout` only removes it from this machine.
+- If you think your key was exposed, regenerate it on
+  <https://stashvent.dev/account> (on another server, ask its operator for a new
+  one). The old key stops working at once, so run `stashvent login` with the new
+  one on each machine. Shares it already created stay until they expire, and
+  the delete tokens in your history can still delete the ones you pushed. For a
+  key that leaked, tick "Also end every share made with the old key" when you
+  regenerate: every share pushed with it stops working at once, yours
+  included. `logout` only removes the key from this machine.
 
 ## Commands
 
@@ -185,6 +197,9 @@ stashvent pull https://stashvent.example/8xK29qLm4Tz7
   `git fetch` and pull again.
 - Each pull counts against the share's pull limit (see [Limits](#limits)).
   Wrong password tries within one pull don't.
+- Opened in a browser, a link to the hosted service shows the share's size, its
+  expiry, and this command, never the password. Opening the page doesn't count
+  as a pull.
 
 ### list
 
@@ -247,6 +262,8 @@ password by PBKDF2-SHA256) before it's uploaded.
 - **The server does see** each share's size, when it was created and expires,
   how often it was looked up, and the encryption parameters (salt and IV,
   which aren't secret). With API keys, it knows which key created which share.
+  On the hosted service, each key belongs to a GitHub account, so a share can be
+  traced to the account that pushed it.
 - Anyone with the link **and** the password can import the stash until it
   expires, is deleted, or reaches its pull limit. Treat both like a secret.
 
@@ -313,5 +330,5 @@ being created is deleted again.
 | `The server reported an invalid size for this share` | The link's server sent a broken answer: ask the sender to push again |
 | `The server at … returned an error (HTTP …): "…"` | The quoted text is that server's own explanation; if it asks for a newer stashvent, upgrade |
 | `refusing insecure http:// server` | Use the server's `https://` address |
-| `This server needs an API key to push.` | Run `stashvent login` with the key its operator gave you |
-| `The server didn't accept your API key` | It was revoked or mistyped: log in again, or ask the operator for a new key |
+| `This server needs an API key to push.` | Run `stashvent login` with a key from https://stashvent.dev/account (hosted service) or from the server's operator |
+| `The server didn't accept your API key` | It was revoked, replaced, or mistyped: log in again with your current key, or regenerate it on https://stashvent.dev/account (another server: ask its operator) |
