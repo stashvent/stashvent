@@ -21,7 +21,7 @@ one: for your team, your company, or just yourself. For using the CLI, see
 ## What you need
 
 - **The server image**, `ghcr.io/stashvent/stashvent-server` (linux/amd64).
-  Pin a version tag such as `server-v0.1.0-rc.1`; `:latest` follows the newest
+  Pin a version tag such as `server-v0.1.1`; `:latest` follows the newest
   final version. [RELEASES.md](RELEASES.md#releasing-the-server) lists the
   tags.
 - **Postgres.** The server applies its own migrations at startup. Tested with
@@ -56,7 +56,7 @@ Then start it:
 ```
 docker run -d --name stashvent-server --restart unless-stopped \
   --env-file stashvent.env -p 8080:8080 \
-  ghcr.io/stashvent/stashvent-server:server-v0.1.0-rc.1
+  ghcr.io/stashvent/stashvent-server:server-v0.1.1
 ```
 
 It listens on `:8080`. Check it, then point the CLI at it:
