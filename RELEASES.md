@@ -146,9 +146,6 @@ turned on may block unsigned programs however they're installed.
 release candidates for testing; use the latest release without a suffix
 otherwise.
 
-While the repository is private, only people with access to it can open the
-releases page, and neither the install scripts nor `go install` work.
-
 ## Making a release
 
 Releases are cut by the maintainers: only they can push release tags. This
@@ -156,7 +153,9 @@ section is for them, and for anyone who wants to see how a release is built.
 
 Versions follow [semver](https://semver.org) with a `v` in front: `v0.1.0`,
 `v0.1.1`, `v0.2.0`. A release candidate adds `-rc.N`: `v0.1.0-rc.1`. Each
-version is tested as a release candidate first.
+version is tested as a release candidate first, except a release that only
+rebuilds with a newer Go or dependency version, with no code changes: tag
+that one as a final version straight away.
 
 **1. Start from a green `main`.** Merge what goes into the release and wait for
 CI on `main` to pass. The release workflow runs the tests again, but not lint,
@@ -334,4 +333,4 @@ never rebuilt.
 - GoReleaser is pinned to the same version in the `Makefile`
   (`GORELEASER_IMAGE`) and `release.yml`; change both together.
 - Not done yet: signing and notarization; package managers (winget, Scoop,
-  Homebrew), which need the repository to be public, like `go install`.
+  Homebrew).
