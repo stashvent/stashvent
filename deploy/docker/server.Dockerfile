@@ -1,7 +1,7 @@
 # Builds the stashvent-server image.
 #   docker build -f deploy/docker/server.Dockerfile --build-arg VERSION=v0.1.0 .
 
-FROM golang:1.27.3-alpine AS build
+FROM golang:1.27.4-alpine AS build
 WORKDIR /src
 # For the server build and for go-licenses alike, so the licenses collected are
 # those of exactly the packages the binary compiles.

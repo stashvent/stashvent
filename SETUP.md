@@ -7,7 +7,7 @@ see [DOCS.md](DOCS.md); for cutting a release, [RELEASES.md](RELEASES.md).
 
 | Tool | Version | Notes |
 |---|---|---|
-| Go | the one in `go.mod` (1.27.3) | An older Go 1.21+ downloads it by itself (`GOTOOLCHAIN=auto`, the default) |
+| Go | the one in `go.mod` (1.27.4) | An older Go 1.21+ downloads it by itself (`GOTOOLCHAIN=auto`, the default) |
 | Git | 2.32 or newer | CI uses a much newer one; `make test-linux` runs Git 2.47 |
 | Docker | with Compose v2 | Postgres, SeaweedFS, and the Docker-based tools |
 | GNU make | 3.81 or newer | The Makefile sticks to 3.81, the version macOS ships |
